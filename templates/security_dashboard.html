@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard | VAMS{% endblock %}
+
+{% block page_title %}Security Dashboard{% endblock %}
+
+{% block page_subtitle %}
+Kelola akses pengunjung dan proses kartu mahasiswa di Menara Batavia.
+{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <div>
+        <h2>Selamat bertugas, {{ request.user.username }}!</h2>
+        <p>
+            Pantau permintaan akses mahasiswa, proses peminjaman kartu,
+            dan pastikan pengembalian kartu dilakukan sesuai prosedur.
+        </p>
+    </div>
+    <div class="welcome-mark">S</div>
+</section>
+
+<h2 class="section-title">Visitor Management</h2>
+<p class="section-description">
+    Pilih aktivitas operasional yang ingin Anda kelola.
+</p>
+
+<div class="card-grid">
+    <article class="dashboard-card">
+        <div class="card-icon">▤</div>
+        <h3>Permintaan Akses</h3>
+        <p>
+            Lihat permintaan kunjungan mahasiswa dan proses
+            pemeriksaan serta persetujuannya.
+        </p>
+        <a class="card-link" href="{% url 'security_requests' %}">
+            Kelola Permintaan <span>→</span>
+        </a>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="card-icon green">▣</div>
+        <h3>Peminjaman Kartu</h3>
+        <p>
+            Proses pemberian kartu pengunjung kepada mahasiswa
+            dengan permintaan akses yang telah disetujui.
+        </p>
+        <a class="card-link" href="{% url 'card_issuance_list' %}">
+            Proses Peminjaman <span>→</span>
+        </a>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="card-icon orange">↩</div>
+        <h3>Pengembalian Kartu</h3>
+        <p>
+            Periksa daftar kartu yang masih dipinjam
+            dan catat pengembaliannya.
+        </p>
+        <a class="card-link" href="{% url 'borrowed_cards_list' %}">
+            Kelola Pengembalian <span>→</span>
+        </a>
+    </article>
+</div>
+
+<h2 class="section-title">Panduan Operasional</h2>
+<div class="info-panel">
+    <h3>Pastikan setiap transaksi tercatat</h3>
+    <p>
+        Periksa persetujuan akses sebelum memberikan kartu.
+        Catat batas waktu pengembalian dan pastikan kartu
+        dikembalikan setelah kunjungan selesai.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Riwayat Transaksi</h2>
+            <p class="text-muted mb-0">
+                Pantau seluruh aktivitas peminjaman dan pengembalian kartu.
+            </p>
+        </div>
+
+        <!-- Tombol Ekspor -->
+        <div class="d-flex gap-2 flex-wrap">
+            <a
+                href="{% url 'export_transaction_csv' %}?q={{ keyword|urlencode }}&status={{ selected_status|urlencode }}&start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}"
+                class="btn btn-outline-success"
+            >
+                Ekspor CSV
+            </a>
+
+            <a
+                href="{% url 'export_transaction_excel' %}?q={{ keyword|urlencode }}&status={{ selected_status|urlencode }}&start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}"
+                class="btn btn-success"
+            >
+                Ekspor Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistik -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total Transaksi</p>
+                    <h3 class="fw-bold">{{ total_transactions }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Sedang Dipinjam</p>
+                    <h3 class="fw-bold text-primary">{{ borrowed_count }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Sudah Dikembalikan</p>
+                    <h3 class="fw-bold text-success">{{ returned_count }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Terlambat</p>
+                    <h3 class="fw-bold text-danger">{{ overdue_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pencarian dan Filter -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+
+                <div class="col-lg-4 col-md-6">
+                    <label for="search" class="form-label">Pencarian</label>
+                    <input
+                        type="text"
+                        id="search"
+                        name="q"
+                        class="form-control"
+                        placeholder="Username, nama, NIM, atau nomor kartu..."
+                        value="{{ keyword }}"
+                    >
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Semua Status</option>
+
+                        {% for value, label in status_choices %}
+                        <option
+                            value="{{ value }}"
+                            {% if selected_status == value %}selected{% endif %}
+                        >
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label for="start_date" class="form-label">Tanggal Mulai</label>
+                    <input
+                        type="date"
+                        id="start_date"
+                        name="start_date"
+                        class="form-control"
+                        value="{{ start_date }}"
+                    >
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label for="end_date" class="form-label">Tanggal Akhir</label>
+                    <input
+                        type="date"
+                        id="end_date"
+                        name="end_date"
+                        class="form-control"
+                        value="{{ end_date }}"
+                    >
+                </div>
+
+                <div class="col-lg-2 col-md-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Cari
+                    </button>
+
+                    <a
+                        href="{% url 'transaction_history' %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Reset
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Riwayat -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Mahasiswa</th>
+                            <th>Nomor Kartu</th>
+                            <th>Waktu Pinjam</th>
+                            <th>Batas Pengembalian</th>
+                            <th>Waktu Pengembalian</th>
+                            <th>Disetujui Oleh</th>
+                            <th>Diserahkan Oleh</th>
+                            <th>Diterima Kembali Oleh</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in transactions %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+
+                            <!-- Mahasiswa -->
+                            <td>
+                                <div class="fw-semibold">
+                                    {{ item.student.get_full_name|default:item.student.username }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ item.student.username }}
+                                </small>
+                            </td>
+
+                            <!-- Nomor Kartu -->
+                            <td>
+                                <span class="fw-semibold">
+                                    {{ item.card.card_number }}
+                                </span>
+                            </td>
+
+                            <!-- Waktu Pinjam -->
+                            <td>
+                                {% if item.borrowed_at %}
+                                    {{ item.borrowed_at|date:"d M Y, H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- Batas Pengembalian -->
+                            <td>
+                                {% if item.due_at %}
+                                    {{ item.due_at|date:"d M Y, H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- Waktu Pengembalian -->
+                            <td>
+                                {% if item.returned_at %}
+                                    {{ item.returned_at|date:"d M Y, H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- Petugas yang Menyetujui -->
+                            <td>
+                                {% if item.approved_by %}
+                                    {{ item.approved_by.get_full_name|default:item.approved_by.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- Petugas yang Menyerahkan Kartu -->
+                            <td>
+                                {% if item.issued_by %}
+                                    {{ item.issued_by.get_full_name|default:item.issued_by.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- Petugas yang Menerima Pengembalian -->
+                            <td>
+                                {% if item.returned_to %}
+                                    {{ item.returned_to.get_full_name|default:item.returned_to.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- Status -->
+                            <td>
+                                {% if item.status == "BORROWED" %}
+                                    <span class="badge bg-primary">Dipinjam</span>
+                                {% elif item.status == "RETURNED" %}
+                                    <span class="badge bg-success">Dikembalikan</span>
+                                {% elif item.status == "OVERDUE" %}
+                                    <span class="badge bg-danger">Terlambat</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        {{ item.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <h6 class="text-muted">
+                                    Belum ada transaksi yang ditemukan.
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    Coba ubah filter pencarian atau rentang tanggal.
+                                </p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-muted small mb-0">
+                Menampilkan {{ transactions|length }} transaksi sesuai filter.
+            </p>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

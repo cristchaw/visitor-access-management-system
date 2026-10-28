@@ -1,0 +1,55 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path(
+        "security/issuance/",
+        views.card_issuance_list,
+        name="card_issuance_list",
+    ),
+    path(
+        "security/issuance/<int:request_id>/",
+        views.issue_card,
+        name="issue_card",
+    ),
+    path(
+        "security/return/<int:transaction_id>/",
+        views.return_card,
+        name="return_card",
+    ),
+    path(
+        "security/borrowed/",
+        views.borrowed_cards_list,
+        name="borrowed_cards_list",
+    ),
+    path(
+        "admin/cards/",
+        views.card_management,
+        name="card_management",
+    ),
+    path(
+        "admin/cards/create/",
+        views.create_card,
+        name="create_card",
+    ),
+    path(
+        "admin/cards/<int:card_id>/toggle-block/",
+        views.toggle_card_block,
+        name="toggle_card_block",
+    ),
+    path(
+        "admin/transactions/export/csv/",
+        views.export_transaction_csv,
+        name="export_transaction_csv",
+    ),
+    path(
+        "admin/transactions/export/excel/",
+        views.export_transaction_excel,
+        name="export_transaction_excel",
+    ),
+    path(
+        "admin/transactions/",
+        views.transaction_history,
+        name="transaction_history",
+    ),
+]

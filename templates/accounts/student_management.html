@@ -1,0 +1,315 @@
+```django
+{% extends "base.html" %}
+
+{% block title %}Manajemen Mahasiswa | VAMS{% endblock %}
+{% block page_title %}Manajemen Mahasiswa{% endblock %}
+{% block page_subtitle %}
+Kelola akun, hak akses, dan status mahasiswa VAMS.
+{% endblock %}
+
+{% block content %}
+
+<!-- Ringkasan -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Mahasiswa</p>
+                <h3 class="fw-bold mb-0">{{ total_students }}</h3>
+                <small class="text-muted">
+                    Seluruh akun yang masih tercatat
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Akun Aktif</p>
+                <h3 class="fw-bold text-success mb-0">
+                    {{ active_students }}
+                </h3>
+                <small class="text-muted">
+                    Akun yang dapat digunakan untuk login
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Akun Diblokir</p>
+                <h3 class="fw-bold text-danger mb-0">
+                    {{ blocked_students }}
+                </h3>
+                <small class="text-muted">
+                    Akun yang diblokir oleh sistem
+                </small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Daftar mahasiswa -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex flex-column flex-lg-row
+                    justify-content-between align-items-lg-center
+                    gap-3 mb-4">
+
+            <div>
+                <h5 class="fw-bold mb-1">Daftar Mahasiswa</h5>
+                <p class="text-muted small mb-0">
+                    Kelola akun mahasiswa dan lihat status riwayat aksesnya.
+                </p>
+            </div>
+
+            <form method="get" class="d-flex flex-wrap gap-2">
+
+                <input
+                    type="search"
+                    name="q"
+                    class="form-control"
+                    placeholder="Cari nama, NIM, atau email"
+                    value="{{ keyword }}"
+                    aria-label="Cari mahasiswa"
+                >
+
+                <button type="submit" class="btn btn-primary">
+                    Cari
+                </button>
+
+                {% if keyword %}
+                    <a
+                        href="{% url 'student_management' %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Reset
+                    </a>
+                {% endif %}
+
+            </form>
+
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>No.</th>
+                        <th>Mahasiswa</th>
+                        <th>NIM</th>
+                        <th>Email</th>
+                        <th>Status Akun</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for student in students %}
+                    <tr>
+
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            <div class="fw-semibold">
+                                {{ student.get_full_name|default:student.username }}
+                            </div>
+
+                            <small class="text-muted">
+                                @{{ student.username }}
+                            </small>
+                        </td>
+
+                        <td>
+                            {{ student.student_id|default:"—" }}
+                        </td>
+
+                        <td>
+                            {{ student.email|default:"—" }}
+                        </td>
+
+                        <!-- Status akun -->
+                        <td>
+
+                            {% if not student.is_active %}
+
+                                <span class="badge text-bg-secondary">
+                                    Dinonaktifkan
+                                </span>
+
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        Riwayat transaksi dipertahankan
+                                    </small>
+                                </div>
+
+                                <div>
+                                    <small class="text-muted">
+                                        Tidak dapat login
+                                    </small>
+                                </div>
+
+                            {% elif student.is_blocked %}
+
+                                <span class="badge text-bg-danger">
+                                    Diblokir
+                                </span>
+
+                                {% if student.overdue_blocked %}
+                                    <div class="mt-1">
+                                        <small class="text-danger">
+                                            Keterlambatan kartu
+                                        </small>
+                                    </div>
+                                {% else %}
+                                    <div class="mt-1">
+                                        <small class="text-muted">
+                                            Blokir admin
+                                        </small>
+                                    </div>
+                                {% endif %}
+
+                            {% else %}
+
+                                <span class="badge text-bg-success">
+                                    Aktif
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <!-- Tombol aksi -->
+                        <td>
+                            <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                                {% if student.is_active %}
+
+                                    <!-- Blokir / buka blokir -->
+                                    {% if student.is_blocked and student.overdue_blocked %}
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            disabled
+                                            title="Selesaikan keterlambatan kartu terlebih dahulu"
+                                        >
+                                            Buka Blokir
+                                        </button>
+
+                                    {% else %}
+
+                                        <form
+                                            method="post"
+                                            action="{% url 'toggle_student_block' student.id %}"
+                                            onsubmit="return confirm('Yakin ingin {% if student.is_blocked %}membuka blokir{% else %}memblokir{% endif %} akun {{ student.username }}?');"
+                                        >
+                                            {% csrf_token %}
+
+                                            {% if student.is_blocked %}
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-success"
+                                                >
+                                                    Buka Blokir
+                                                </button>
+
+                                            {% else %}
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                >
+                                                    Blokir
+                                                </button>
+
+                                            {% endif %}
+                                        </form>
+
+                                    {% endif %}
+
+                                    <!-- Hapus / nonaktifkan akun -->
+                                    <form
+                                        method="post"
+                                        action="{% url 'delete_student' student.id %}"
+                                        onsubmit="return confirm('Akun {{ student.username }} akan dihapus jika tidak memiliki data terkait yang harus dipertahankan. Jika memiliki riwayat transaksi, akun akan dinonaktifkan agar riwayat tetap aman. Lanjutkan?');"
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-danger"
+                                        >
+                                            Hapus
+                                        </button>
+                                    </form>
+
+                                {% else %}
+
+                                    <span
+                                        class="text-muted small align-self-center"
+                                        title="Akun sudah dinonaktifkan"
+                                    >
+                                        Tidak ada tindakan
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <p class="fw-semibold mb-1">
+                                Mahasiswa tidak ditemukan
+                            </p>
+
+                            <p class="text-muted small mb-0">
+                                Coba gunakan nama, NIM, atau email lain.
+                            </p>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+        </div>
+
+        <!-- Informasi bawah tabel -->
+        <div class="d-flex flex-column flex-md-row
+                    justify-content-between gap-2 mt-3">
+
+            <p class="text-muted small mb-0">
+                Menampilkan {{ students|length }} mahasiswa
+                {% if keyword %}
+                    untuk pencarian "{{ keyword }}"
+                {% endif %}.
+            </p>
+
+            <p class="text-muted small mb-0">
+                Akun dengan riwayat transaksi dipertahankan
+                dan dinonaktifkan untuk menjaga integritas data.
+            </p>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+```

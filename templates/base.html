@@ -1,0 +1,176 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#14213d">
+    <title>{% block title %}VAMS Dashboard{% endblock %}</title>
+    <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <a href="/" class="brand">
+                <span class="brand-icon">V</span>
+                <span>
+                    <strong>VAMS</strong>
+                    <small>VISITOR MANAGEMENT</small>
+                </span>
+            </a>
+
+            <div class="sidebar-label">MENU UTAMA</div>
+
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-link">
+                    <span class="nav-icon">▦</span>
+                    <span>Dashboard</span>
+                </a>
+
+                {% if user.role == "STUDENT" %}
+                    <a href="{% url 'create_access_request' %}" class="nav-link">
+                        <span class="nav-icon">＋</span>
+                        <span>Ajukan Akses</span>
+                    </a>
+                    <a href="{% url 'student_access_requests' %}" class="nav-link">
+                        <span class="nav-icon">▤</span>
+                        <span>Status Permintaan</span>
+                    </a>
+                {% elif user.role == "SECURITY" %}
+                    <a href="{% url 'security_requests' %}" class="nav-link">
+                        <span class="nav-icon">▤</span>
+                        <span>Permintaan Akses</span>
+                    </a>
+                    <a href="{% url 'card_issuance_list' %}" class="nav-link">
+                        <span class="nav-icon">▣</span>
+                        <span>Peminjaman Kartu</span>
+                    </a>
+                    <a href="{% url 'borrowed_cards_list' %}" class="nav-link">
+                        <span class="nav-icon">↩</span>
+                        <span>Pengembalian Kartu</span>
+                    </a>
+                {% elif user.role == "ADMIN" %}
+                <button
+                    type="button"
+                    class="nav-link nav-link-muted"
+                    id="adminMenuToggle"
+                    aria-expanded="false"
+                    aria-controls="adminSubmenu"
+                    onclick="toggleAdminMenu()">
+                    <span class="nav-icon">⚙</span>
+                    <span>Manajemen Sistem</span>
+                    <span id="adminMenuArrow" style="margin-left:auto;">⌄</span>
+                </button>
+
+                <div id="adminSubmenu" style="display:none; padding-left: 18px;">
+                    <a href="{% url 'student_management' %}" class="nav-link">
+                        <span class="nav-icon">♙</span>
+                        <span>Manajemen Mahasiswa</span>
+                    </a>
+                    <a href="{% url 'security_management' %}" class="nav-link">
+                        <span class="nav-icon">♙</span>
+                        <span>Manajemen Security</span>
+                    </a>
+                    <a href="{% url 'card_management' %}" class="nav-link">
+                        <span class="nav-icon">▣</span>
+                        <span>Manajemen Kartu</span>
+                    </a>
+                    <a href="{% url 'transaction_history' %}" class="nav-link">
+                        <span class="nav-icon">↻</span>
+                        <span>Riwayat Transaksi</span>
+                    </a>
+                </div>
+            {% endif %}
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-status">
+                    <span class="status-dot"></span>
+                    Sistem VAMS
+                    <small>Online</small>
+                </div>
+
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button">
+                        <span class="nav-icon">↪</span>
+                        Keluar
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <div>
+                    <span class="topbar-label">PRESIDENT UNIVERSITY</span>
+                    <div class="topbar-title">Visitor Access Management System</div>
+                </div>
+
+                <div class="profile">
+                    <div class="avatar">{{ user.username|first|upper }}</div>
+                    <div class="profile-info">
+                        <strong>{{ user.username }}</strong>
+                        <span>{{ user.get_role_display }}</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="page-heading">
+                    <div>
+                        <div class="eyebrow">OVERVIEW</div>
+                        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p>{% block page_subtitle %}Ringkasan aktivitas sistem VAMS.{% endblock %}</p>
+                    </div>
+                    <div class="date-badge">● Sistem Aktif</div>
+                </div>
+
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+
+                <footer class="footer">
+                    <span>© {% now "Y" %} VAMS · President University</span>
+                    <span>Visitor Access Management System</span>
+                </footer>
+            </section>
+        </main>
+    </div>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoJq6l3H8H3J5r5n5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5"
+        crossorigin="anonymous">
+    </script>
+    <script>
+        function toggleAdminMenu() {
+            const submenu = document.getElementById("adminSubmenu");
+            const toggle = document.getElementById("adminMenuToggle");
+            const arrow = document.getElementById("adminMenuArrow");
+
+            if (!submenu || !toggle || !arrow) return;
+
+            const isOpen = submenu.style.display !== "none";
+
+            submenu.style.display = isOpen ? "none" : "block";
+            toggle.setAttribute("aria-expanded", String(!isOpen));
+            arrow.textContent = isOpen ? "⌄" : "⌃";
+        }
+    </script>
+</body>
+</html>
+
+</body>
+</html>

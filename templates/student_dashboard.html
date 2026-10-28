@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard | VAMS{% endblock %}
+
+{% block page_title %}Student Dashboard{% endblock %}
+
+{% block page_subtitle %}
+Kelola permintaan akses dan pantau aktivitas kunjungan Anda.
+{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <div>
+        <h2>Selamat datang, {{ user.username }}!</h2>
+        <p>
+            Selamat datang di VAMS. Ajukan akses ke Menara Batavia
+            dan pantau status permintaan Anda dengan mudah.
+        </p>
+    </div>
+    <div class="welcome-mark">V</div>
+</section>
+
+<h2 class="section-title">Layanan Mahasiswa</h2>
+<p class="section-description">
+    Pilih layanan yang ingin Anda gunakan.
+</p>
+
+<div class="card-grid two-columns">
+    <article class="dashboard-card">
+        <div class="card-icon">＋</div>
+        <h3>Ajukan Akses</h3>
+        <p>
+            Kirim permintaan kunjungan ke Menara Batavia
+            melalui proses pengajuan digital.
+        </p>
+        <a class="card-link" href="{% url 'create_access_request' %}">
+            Buat Permintaan <span>→</span>
+        </a>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="card-icon green">▤</div>
+        <h3>Status Permintaan</h3>
+        <p>
+            Periksa perkembangan permintaan akses,
+            termasuk status persetujuan dari petugas keamanan.
+        </p>
+        <a class="card-link" href="{% url 'student_access_requests' %}">
+            Lihat Status <span>→</span>
+        </a>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="card-icon">♙</div>
+        <h3>Profil Saya</h3>
+        <p>
+            Periksa dan perbarui informasi pribadi,
+            termasuk nama, email, NIM, dan nomor telepon.
+        </p>
+        <a class="card-link" href="{% url 'edit_profile' %}">
+            Edit Profil <span>→</span>
+        </a>
+    </article>
+</div>
+
+<h2 class="section-title">Informasi Sistem</h2>
+<div class="info-panel">
+    <h3>Proses Akses Pengunjung</h3>
+    <p>
+        Ajukan permintaan akses terlebih dahulu. Setelah disetujui,
+        ikuti petunjuk petugas keamanan untuk mengambil dan
+        mengembalikan kartu pengunjung sesuai batas waktu.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+
+{% block title %}Peminjaman Kartu | VAMS{% endblock %}
+
+{% block page_title %}Peminjaman Kartu{% endblock %}
+
+{% block page_subtitle %}
+Kelola permintaan, penerbitan, dan pengembalian kartu pengunjung.
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .vams-stat-card {
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
+        height: 100%;
+    }
+
+    .vams-stat-label {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .vams-stat-number {
+        font-size: 1.8rem;
+        font-weight: 750;
+        margin-top: 5px;
+    }
+
+    .vams-section-card {
+        border: 0;
+        border-radius: 18px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.045);
+        overflow: hidden;
+    }
+
+    .vams-section-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .vams-section-body {
+        padding: 24px;
+    }
+
+    .vams-student-card {
+        border: 1px solid #e9ecef;
+        border-radius: 14px;
+        padding: 20px;
+        height: 100%;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .vams-student-card:hover {
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.055);
+    }
+
+    .vams-student-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 750;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .vams-info-label {
+        color: #6b7280;
+        font-size: 0.78rem;
+        margin-bottom: 4px;
+    }
+
+    .vams-info-value {
+        font-size: 0.92rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .vams-empty-state {
+        padding: 36px 20px;
+        text-align: center;
+        border: 1px dashed #d9dee5;
+        border-radius: 14px;
+        background: #fafbfc;
+    }
+
+    .vams-section-count {
+        min-width: 30px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        text-align: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .vams-divider {
+        border-top: 1px solid #edf0f2;
+        margin: 18px 0;
+    }
+</style>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-3"
+             role="alert">
+            {{ message }}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Tutup"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- HEADER -->
+<div class="d-flex flex-column flex-md-row justify-content-between
+            align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="h5 fw-bold mb-1">Pusat Pengelolaan Kartu</h2>
+        <p class="text-secondary small mb-0">
+            Halo, {{ request.user.username }}.
+            Pantau mahasiswa yang menunggu kartu dan yang masih meminjam.
+        </p>
+    </div>
+
+    <a href="{% url 'borrowed_cards_list' %}"
+       class="btn btn-outline-primary rounded-3">
+        Riwayat Kartu Aktif →
+    </a>
+</div>
+
+<!-- RINGKASAN -->
+<div class="row g-3 mb-4">
+
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card vams-stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="vams-stat-label">Menunggu Peminjaman</div>
+                        <div class="vams-stat-number text-primary">
+                            {{ waiting_count }}
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            Siap diberikan kartu
+                        </div>
+                    </div>
+                    <div class="vams-student-avatar bg-primary-subtle text-primary">
+                        +
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card vams-stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="vams-stat-label">Sedang Dipinjam</div>
+                        <div class="vams-stat-number text-success">
+                            {{ borrowed_count }}
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            Belum melewati batas waktu
+                        </div>
+                    </div>
+                    <div class="vams-student-avatar bg-success-subtle text-success">
+                        ↗
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card vams-stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="vams-stat-label">Terlambat</div>
+                        <div class="vams-stat-number text-danger">
+                            {{ overdue_count }}
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            Melewati batas pengembalian
+                        </div>
+                    </div>
+                    <div class="vams-student-avatar bg-danger-subtle text-danger">
+                        !
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- BAGIAN 1: MENUNGGU PEMINJAMAN -->
+<div class="card vams-section-card mb-4">
+
+    <div class="vams-section-header d-flex flex-column flex-sm-row
+                justify-content-between align-items-sm-center gap-2">
+        <div>
+            <h3 class="h6 fw-bold mb-1">
+                01. Menunggu Peminjaman
+            </h3>
+            <p class="small text-secondary mb-0">
+                Permintaan sudah disetujui dan mahasiswa belum memiliki
+                kartu aktif.
+            </p>
+        </div>
+
+        <span class="vams-section-count bg-primary-subtle text-primary">
+            {{ waiting_count }} mahasiswa
+        </span>
+    </div>
+
+    <div class="vams-section-body">
+
+        {% if waiting_requests %}
+
+            <div class="row g-3">
+
+                {% for access_request in waiting_requests %}
+
+                    <div class="col-12 col-xl-6">
+                        <div class="vams-student-card">
+
+                            <!-- IDENTITAS MAHASISWA -->
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="vams-student-avatar bg-primary-subtle text-primary">
+                                    {{ access_request.student.username|first|upper }}
+                                </div>
+
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">
+                                        {{ access_request.student.username }}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        NIM:
+                                        {{ access_request.student.student_id|default:"-" }}
+                                    </div>
+                                </div>
+
+                                <span class="badge rounded-pill bg-success-subtle text-success">
+                                    Disetujui
+                                </span>
+                            </div>
+
+                            <div class="row g-3">
+
+                                <div class="col-6">
+                                    <div class="vams-info-label">
+                                        Tanggal Kunjungan
+                                    </div>
+                                    <div class="vams-info-value">
+                                        {{ access_request.visit_date|date:"d M Y" }}
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="vams-info-label">
+                                        Status Kartu
+                                    </div>
+                                    <div class="vams-info-value text-primary">
+                                        Belum Diberikan
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="vams-info-label">
+                                        Tujuan Kunjungan
+                                    </div>
+                                    <div class="vams-info-value">
+                                        {{ access_request.purpose }}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="vams-info-label">
+                                        Disetujui Oleh
+                                    </div>
+                                    <div class="vams-info-value">
+                                        {% if access_request.reviewed_by %}
+                                            {{ access_request.reviewed_by.get_full_name|default:access_request.reviewed_by.username }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
+                                    {% if access_request.reviewed_at %}
+                                        <div class="small text-secondary">
+                                            {{ access_request.reviewed_at|date:"d M Y, H:i" }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="vams-divider"></div>
+
+                            {% if available_cards %}
+
+                                <form method="post"
+                                      action="{% url 'issue_card' access_request.id %}">
+                                    {% csrf_token %}
+
+                                    <div class="mb-3">
+                                        <label for="card-{{ access_request.id }}"
+                                               class="form-label small fw-semibold">
+                                            Pilih Kartu Tersedia
+                                        </label>
+
+                                        <select class="form-select"
+                                                id="card-{{ access_request.id }}"
+                                                name="card_id"
+                                                required>
+                                            <option value="">
+                                                -- Pilih nomor kartu --
+                                            </option>
+
+                                            {% for card in available_cards %}
+                                                <option value="{{ card.id }}">
+                                                    {{ card.card_number }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="due-{{ access_request.id }}"
+                                               class="form-label small fw-semibold">
+                                            Batas Pengembalian
+                                        </label>
+
+                                        <input class="form-control"
+                                               type="datetime-local"
+                                               id="due-{{ access_request.id }}"
+                                               name="due_at"
+                                               required>
+
+                                        <div class="form-text">
+                                            Pilih tanggal dan waktu pengembalian.
+                                        </div>
+                                    </div>
+
+                                    <button type="submit"
+                                            class="btn btn-primary w-100 rounded-3 fw-semibold">
+                                        Berikan Kartu →
+                                    </button>
+                                </form>
+
+                            {% else %}
+
+                                <div class="alert alert-warning rounded-3 mb-0">
+                                    <div class="fw-semibold">
+                                        Kartu Belum Tersedia
+                                    </div>
+                                    <div class="small">
+                                        Tidak ada kartu yang berstatus tersedia.
+                                        Tunggu hingga kartu dikembalikan.
+                                    </div>
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="vams-empty-state">
+                <div class="fs-2 mb-2">✓</div>
+                <h4 class="h6 fw-bold">Tidak Ada Antrean Peminjaman</h4>
+                <p class="small text-secondary mb-0">
+                    Belum ada permintaan yang siap menerima kartu.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- BAGIAN 2: SEDANG DIPINJAM -->
+<div class="card vams-section-card mb-4">
+
+    <div class="vams-section-header d-flex flex-column flex-sm-row
+                justify-content-between align-items-sm-center gap-2">
+        <div>
+            <h3 class="h6 fw-bold mb-1">
+                02. Kartu Sedang Dipinjam
+            </h3>
+            <p class="small text-secondary mb-0">
+                Mahasiswa sudah menerima kartu dan belum melewati
+                batas pengembalian.
+            </p>
+        </div>
+
+        <span class="vams-section-count bg-success-subtle text-success">
+            {{ borrowed_count }} transaksi
+        </span>
+    </div>
+
+    <div class="vams-section-body">
+
+        {% if borrowed_transactions %}
+
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mahasiswa</th>
+                            <th>Nomor Kartu</th>
+                            <th>Dipinjam</th>
+                            <th>Batas Pengembalian</th>
+                            <th>Diserahkan Oleh</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for item in borrowed_transactions %}
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">
+                                        {{ item.student.username }}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        NIM:
+                                        {{ item.student.student_id|default:"-" }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        {{ item.card.card_number }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="small">
+                                        {% if item.borrowed_at %}
+                                            {{ item.borrowed_at|date:"d M Y" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        {% if item.borrowed_at %}
+                                            {{ item.borrowed_at|date:"H:i" }}
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="small fw-semibold">
+                                        {{ item.due_at|date:"d M Y" }}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        {{ item.due_at|date:"H:i" }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    {% if item.issued_by %}
+                                        <div class="fw-semibold">
+                                            {{ item.issued_by.get_full_name|default:item.issued_by.username }}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-secondary">Belum tercatat</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span class="badge rounded-pill bg-success-subtle text-success">
+                                        Sedang Dipinjam
+                                    </span>
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="vams-empty-state">
+                <div class="fs-2 mb-2">📋</div>
+                <h4 class="h6 fw-bold">Tidak Ada Kartu yang Sedang Dipinjam</h4>
+                <p class="small text-secondary mb-0">
+                    Semua kartu sudah dikembalikan atau belum dipinjam.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- BAGIAN 3: TERLAMBAT -->
+<div class="card vams-section-card mb-4">
+
+    <div class="vams-section-header d-flex flex-column flex-sm-row
+                justify-content-between align-items-sm-center gap-2">
+        <div>
+            <h3 class="h6 fw-bold mb-1">
+                03. Perlu Perhatian — Terlambat
+            </h3>
+            <p class="small text-secondary mb-0">
+                Kartu belum dikembalikan hingga melewati batas waktu.
+            </p>
+        </div>
+
+        <span class="vams-section-count bg-danger-subtle text-danger">
+            {{ overdue_count }} transaksi
+        </span>
+    </div>
+
+    <div class="vams-section-body">
+
+        {% if overdue_transactions %}
+
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mahasiswa</th>
+                            <th>Nomor Kartu</th>
+                            <th>Batas Pengembalian</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for item in overdue_transactions %}
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">
+                                        {{ item.student.username }}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        NIM:
+                                        {{ item.student.student_id|default:"-" }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        {{ item.card.card_number }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="small fw-semibold text-danger">
+                                        {{ item.due_at|date:"d M Y" }}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        {{ item.due_at|date:"H:i" }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger">
+                                        Terlambat
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <form method="post"
+                                          action="{% url 'return_card' item.id %}"
+                                          onsubmit="return confirm('Konfirmasi bahwa kartu {{ item.card.card_number }} sudah diterima kembali?');">
+                                        {% csrf_token %}
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger rounded-3">
+                                            Proses Pengembalian
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="vams-empty-state">
+                <div class="fs-2 mb-2">✓</div>
+                <h4 class="h6 fw-bold">Tidak Ada Keterlambatan</h4>
+                <p class="small text-secondary mb-0">
+                    Tidak ada transaksi yang melewati batas pengembalian.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- KEMBALI -->
+<div class="mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-light border rounded-3">
+        ← Kembali ke Dashboard
+    </a>
+</div>
+
+{% endblock %}

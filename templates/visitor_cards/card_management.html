@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Manajemen Kartu | VAMS{% endblock %}
+{% block page_title %}Manajemen Kartu Pengunjung{% endblock %}
+{% block page_subtitle %}
+Kelola kartu pengunjung Menara Batavia.
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Kartu</p>
+                <h3 class="fw-bold mb-0">{{ total_cards }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Tersedia</p>
+                <h3 class="fw-bold text-success mb-0">
+                    {{ available_cards }}
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Dipinjam</p>
+                <h3 class="fw-bold text-primary mb-0">
+                    {{ borrowed_cards }}
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Diblokir</p>
+                <h3 class="fw-bold text-danger mb-0">
+                    {{ blocked_cards }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between
+                    align-items-center gap-3 mb-4">
+            <div>
+                <h5 class="fw-bold mb-1">Daftar Kartu Pengunjung</h5>
+                <p class="text-muted small mb-0">
+                    Pantau status setiap kartu yang terdaftar.
+                </p>
+            </div>
+
+            <a href="{% url 'create_card' %}" class="btn btn-primary">
+                + Tambah Kartu
+            </a>
+        </div>
+
+        <form method="get" class="d-flex gap-2 mb-4">
+            <input
+                type="search"
+                name="q"
+                class="form-control"
+                placeholder="Cari nomor kartu, misalnya VC001"
+                value="{{ keyword }}"
+                aria-label="Cari nomor kartu"
+            >
+
+            <button type="submit" class="btn btn-primary">
+                Cari
+            </button>
+
+            {% if keyword %}
+            <a href="{% url 'card_management' %}"
+               class="btn btn-outline-secondary">
+                Reset
+            </a>
+            {% endif %}
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>No.</th>
+                        <th>Nomor Kartu</th>
+                        <th>Status</th>
+                        <th>Tanggal Dibuat</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for card in cards %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td class="fw-semibold">
+                            {{ card.card_number }}
+                        </td>
+
+                        <td>
+                            {% if card.status == "AVAILABLE" %}
+                                <span class="badge text-bg-success">
+                                    Tersedia
+                                </span>
+                            {% elif card.status == "BORROWED" %}
+                                <span class="badge text-bg-primary">
+                                    Dipinjam
+                                </span>
+                            {% elif card.status == "BLOCKED" %}
+                                <span class="badge text-bg-danger">
+                                    Diblokir
+                                </span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">
+                                    {{ card.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ card.created_at|date:"d M Y, H:i" }}
+                        </td>
+
+                        <td class="text-end">
+                            {% if card.status == "AVAILABLE" or card.status == "BLOCKED" %}
+                            <form
+                                method="post"
+                                action="{% url 'toggle_card_block' card.id %}"
+                                onsubmit="return confirm('Yakin ingin {% if card.status == 'BLOCKED' %}membuka blokir{% else %}memblokir{% endif %} kartu {{ card.card_number }}?');"
+                                class="d-inline"
+                            >
+                                {% csrf_token %}
+
+                                {% if card.status == "BLOCKED" %}
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-outline-success"
+                                >
+                                    Buka Blokir
+                                </button>
+                                {% else %}
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                >
+                                    Blokir
+                                </button>
+                                {% endif %}
+                            </form>
+                            {% else %}
+                                <span class="text-muted small">
+                                    Sedang dipinjam
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <p class="fw-semibold mb-1">
+                                Kartu tidak ditemukan
+                            </p>
+                            <p class="text-muted small mb-0">
+                                Coba kata kunci lain atau tambahkan kartu baru.
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p class="text-muted small mb-0">
+            Menampilkan {{ cards|length }} kartu.
+        </p>
+    </div>
+</div>
+{% endblock %}

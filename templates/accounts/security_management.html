@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Manajemen Security | VAMS{% endblock %}
+{% block page_title %}Manajemen Security{% endblock %}
+{% block page_subtitle %}
+Kelola akun petugas keamanan VAMS.
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Security</p>
+                <h3 class="fw-bold mb-0">{{ total_security }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Akun Aktif</p>
+                <h3 class="fw-bold text-success mb-0">
+                    {{ active_security }}
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Akun Diblokir</p>
+                <h3 class="fw-bold text-danger mb-0">
+                    {{ blocked_security }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between
+                    align-items-center gap-3 mb-4">
+            <div>
+                <h5 class="fw-bold mb-1">Daftar Petugas Security</h5>
+                <p class="text-muted small mb-0">
+                    Kelola akun petugas keamanan.
+                </p>
+            </div>
+
+            <a href="{% url 'create_security' %}"
+               class="btn btn-primary">
+                + Tambah Security
+            </a>
+        </div>
+
+        <form method="get" class="d-flex gap-2 mb-4">
+            <input
+                type="search"
+                name="q"
+                class="form-control"
+                placeholder="Cari username, nama, atau email"
+                value="{{ keyword }}"
+            >
+            <button class="btn btn-primary" type="submit">
+                Cari
+            </button>
+
+            {% if keyword %}
+            <a href="{% url 'security_management' %}"
+               class="btn btn-outline-secondary">
+                Reset
+            </a>
+            {% endif %}
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>No.</th>
+                        <th>Petugas</th>
+                        <th>Email</th>
+                        <th>Telepon</th>
+                        <th>Status</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for officer in security_users %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-semibold">
+                                {{ officer.get_full_name|default:officer.username }}
+                            </div>
+                            <small class="text-muted">
+                                @{{ officer.username }}
+                            </small>
+                        </td>
+                        <td>{{ officer.email }}</td>
+                        <td>{{ officer.phone|default:"—" }}</td>
+                        <td>
+                            {% if officer.is_blocked %}
+                            <span class="badge text-bg-danger">
+                                Diblokir
+                            </span>
+                            {% else %}
+                            <span class="badge text-bg-success">
+                                Aktif
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <form
+                                method="post"
+                                action="{% url 'toggle_security_block' officer.id %}"
+                                onsubmit="return confirm('Yakin ingin {% if officer.is_blocked %}membuka blokir{% else %}memblokir{% endif %} akun {{ officer.username }}?');"
+                            >
+                                {% csrf_token %}
+
+                                {% if officer.is_blocked %}
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-success">
+                                    Buka Blokir
+                                </button>
+                                {% else %}
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger">
+                                    Blokir
+                                </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <p class="fw-semibold mb-1">
+                                Belum ada akun Security
+                            </p>
+                            <p class="text-muted small mb-0">
+                                Tambahkan petugas Security untuk memulai.
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p class="text-muted small mb-0">
+            Menampilkan {{ security_users|length }} petugas.
+        </p>
+    </div>
+</div>
+{% endblock %}

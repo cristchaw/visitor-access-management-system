@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | VAMS{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block page_subtitle %}
+Ringkasan aktivitas akses pengunjung Menara Batavia.
+{% endblock %}
+
+{% block content %}
+
+<!-- WELCOME -->
+<section class="welcome-panel mb-4">
+    <div>
+        <h2>Selamat datang, {{ user.username }}!</h2>
+        <p class="mb-0">
+            Pantau mahasiswa, permintaan akses, dan peminjaman kartu
+            melalui satu dashboard.
+        </p>
+    </div>
+    <div class="welcome-mark">A</div>
+</section>
+
+<!-- RINGKASAN UTAMA -->
+<h2 class="section-title">Ringkasan Sistem</h2>
+<p class="section-description">
+    Gambaran singkat kondisi sistem VAMS saat ini.
+</p>
+
+<div class="row g-3 mb-4">
+
+    <!-- MAHASISWA -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="text-secondary small mb-2">Mahasiswa</div>
+                <div class="fs-2 fw-bold">{{ total_students }}</div>
+                <div class="small mt-2">
+                    <span class="text-success">
+                        {{ active_students }} aktif
+                    </span>
+                    <span class="text-secondary">·</span>
+                    <span class="text-danger">
+                        {{ blocked_students }} diblokir
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PERMINTAAN AKSES -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="text-secondary small mb-2">
+                    Permintaan Akses
+                </div>
+                <div class="fs-2 fw-bold">
+                    {{ total_access_requests }}
+                </div>
+                <div class="small text-warning mt-2">
+                    {{ pending_requests }} menunggu persetujuan
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KARTU TERSEDIA -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="text-secondary small mb-2">
+                    Kartu Tersedia
+                </div>
+                <div class="fs-2 fw-bold">{{ available_cards }}</div>
+                <div class="small text-secondary mt-2">
+                    Siap dipinjam
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KARTU DIPINJAM -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="text-secondary small mb-2">
+                    Kartu Dipinjam
+                </div>
+                <div class="fs-2 fw-bold">{{ borrowed_cards }}</div>
+                <div class="small mt-2">
+                    <span class="text-danger">
+                        {{ overdue_transactions }} terlambat
+                    </span>
+                    <span class="text-secondary">·</span>
+                    <span class="text-secondary">
+                        {{ blocked_cards }} kartu diblokir
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ANALISIS DAN STATUS -->
+<div class="row g-4 mb-4">
+
+    <!-- GRAFIK -->
+    <div class="col-12 col-xl-8">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-3 p-md-4">
+                <h2 class="section-title mb-1">
+                    Analisis Peminjaman
+                </h2>
+                <p class="section-description mb-4">
+                    Jumlah peminjaman kartu selama enam bulan terakhir.
+                </p>
+
+                <div style="position: relative; height: 300px;">
+                    <canvas id="borrowingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATUS OPERASIONAL -->
+    <div class="col-12 col-xl-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-3 p-md-4">
+                <h2 class="section-title mb-1">
+                    Status Operasional
+                </h2>
+                <p class="section-description mb-3">
+                    Kondisi sumber daya sistem.
+                </p>
+
+                <div class="d-flex justify-content-between align-items-center
+                            py-3 border-bottom">
+                    <div>
+                        <div class="fw-semibold">Petugas Security</div>
+                        <div class="small text-secondary">
+                            Petugas terdaftar
+                        </div>
+                    </div>
+                    <span class="fs-4 fw-bold">{{ total_security }}</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center
+                            py-3 border-bottom">
+                    <div>
+                        <div class="fw-semibold">Kartu Diblokir</div>
+                        <div class="small text-secondary">
+                            Tidak tersedia untuk dipinjam
+                        </div>
+                    </div>
+                    <span class="fs-4 fw-bold text-danger">
+                        {{ blocked_cards }}
+                    </span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center
+                            py-3">
+                    <div>
+                        <div class="fw-semibold">Transaksi Terlambat</div>
+                        <div class="small text-secondary">
+                            Perlu ditindaklanjuti
+                        </div>
+                    </div>
+                    <span class="fs-4 fw-bold text-warning">
+                        {{ overdue_transactions }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- RINGKASAN BULANAN -->
+<div class="d-flex justify-content-between align-items-center flex-wrap
+            gap-2 mb-3">
+    <div>
+        <h2 class="section-title mb-1">
+            Transaksi Bulan Ini
+        </h2>
+        <p class="section-description mb-0">
+            Status transaksi berdasarkan tanggal peminjaman bulan berjalan.
+        </p>
+    </div>
+    <span class="badge rounded-pill text-bg-light border">
+        {{ monthly_total_transactions }} transaksi
+    </span>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3 p-md-4">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="py-3">Status Transaksi</th>
+                        <th class="py-3 text-end">Jumlah</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="badge rounded-pill text-bg-primary me-2">
+                                Dipinjam
+                            </span>
+                            Sedang dipinjam
+                        </td>
+                        <td class="text-end fw-semibold">
+                            {{ monthly_borrowed_transactions }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="badge rounded-pill text-bg-success me-2">
+                                Kembali
+                            </span>
+                            Sudah dikembalikan
+                        </td>
+                        <td class="text-end fw-semibold">
+                            {{ monthly_returned_transactions }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="badge rounded-pill text-bg-danger me-2">
+                                Terlambat
+                            </span>
+                            Status terlambat
+                        </td>
+                        <td class="text-end fw-semibold">
+                            {{ monthly_overdue_transactions }}
+                        </td>
+                    </tr>
+                    <tr class="table-light">
+                        <td class="fw-bold">Total Transaksi</td>
+                        <td class="text-end fw-bold">
+                            {{ monthly_total_transactions }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- TRANSAKSI TERBARU -->
+<div class="mb-3">
+    <h2 class="section-title mb-1">Transaksi Terbaru</h2>
+    <p class="section-description mb-0">
+        Lima transaksi kartu terakhir yang tercatat dalam sistem.
+    </p>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3 p-md-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="py-3">Mahasiswa</th>
+                        <th class="py-3">Nomor Kartu</th>
+                        <th class="py-3">Waktu Pinjam</th>
+                        <th class="py-3">Batas Pengembalian</th>
+                        <th class="py-3">Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in recent_transactions %}
+                    <tr>
+                        <td class="py-3">
+                            <div class="fw-semibold">
+                                {{ item.student.username }}
+                            </div>
+                            <div class="small text-secondary">
+                                {{ item.student.student_id|default:"-" }}
+                            </div>
+                        </td>
+
+                        <td class="py-3 fw-semibold">
+                            {{ item.card.card_number }}
+                        </td>
+
+                        <td class="py-3">
+                            {% if item.borrowed_at %}
+                                {{ item.borrowed_at|date:"d M Y, H:i" }}
+                            {% else %}
+                                <span class="text-secondary">
+                                    Belum tercatat
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-3">
+                            {{ item.due_at|date:"d M Y, H:i" }}
+                        </td>
+
+                        <td class="py-3">
+                            {% if item.status == "BORROWED" %}
+                                <span class="badge rounded-pill text-bg-primary">
+                                    Dipinjam
+                                </span>
+                            {% elif item.status == "RETURNED" %}
+                                <span class="badge rounded-pill text-bg-success">
+                                    Dikembalikan
+                                </span>
+                            {% elif item.status == "OVERDUE" %}
+                                <span class="badge rounded-pill text-bg-danger">
+                                    Terlambat
+                                </span>
+                            {% else %}
+                                <span class="badge rounded-pill text-bg-secondary">
+                                    {{ item.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div class="fw-semibold mb-1">
+                                Belum ada transaksi
+                            </div>
+                            <div class="small text-secondary">
+                                Transaksi kartu akan muncul di sini setelah tercatat.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CATATAN -->
+<div class="info-panel">
+    <h3>Data VAMS Terintegrasi</h3>
+    <p>
+        Statistik berasal dari database VAMS dan diperbarui ketika
+        dashboard dimuat ulang.
+    </p>
+</div>
+
+<!-- GRAFIK -->
+{{ borrowing_chart_labels|json_script:"borrowing-labels" }}
+{{ borrowing_chart_values|json_script:"borrowing-values" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const labelsElement = document.getElementById("borrowing-labels");
+    const valuesElement = document.getElementById("borrowing-values");
+    const canvas = document.getElementById("borrowingChart");
+
+    if (!labelsElement || !valuesElement || !canvas) {
+        return;
+    }
+
+    const labels = JSON.parse(labelsElement.textContent);
+    const values = JSON.parse(valuesElement.textContent);
+
+    new Chart(canvas, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Jumlah Peminjaman",
+                data: values,
+                borderWidth: 0,
+                borderRadius: 5,
+                maxBarThickness: 42
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.parsed.y + " peminjaman";
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}

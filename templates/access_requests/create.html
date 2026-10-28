@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Ajukan Akses | VAMS{% endblock %}
+
+{% block page_title %}Ajukan Akses{% endblock %}
+
+{% block page_subtitle %}
+Formulir permintaan akses mahasiswa ke Menara Batavia.
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="card-icon mb-0">＋</div>
+                    <div>
+                        <h2 class="h5 fw-bold mb-1">Formulir Permintaan Akses</h2>
+                        <p class="text-secondary small mb-0">
+                            Halo, {{ request.user.username }}. Lengkapi informasi berikut.
+                        </p>
+                    </div>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show small" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger small">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="mb-4">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold small">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="d-flex flex-column flex-sm-row gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">
+                            Kirim Permintaan <span aria-hidden="true">→</span>
+                        </button>
+
+                        <a href="{% url 'dashboard' %}" class="btn btn-light border px-4 py-2">
+                            Kembali ke Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 mb-3">
+            <div class="card-body p-4">
+                <div class="card-icon">ℹ</div>
+                <h3 class="h6 fw-bold">Informasi Pengajuan</h3>
+                <p class="text-secondary small mb-0" style="line-height: 1.8;">
+                    Pastikan informasi yang kamu masukkan benar.
+                    Permintaan akan diproses oleh petugas keamanan.
+                    Tunggu persetujuan sebelum mengambil kartu pengunjung.
+                </p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <div class="card-icon green">▤</div>
+                <h3 class="h6 fw-bold">Pantau Permintaan</h3>
+                <p class="text-secondary small mb-3">
+                    Lihat status permintaan akses yang telah kamu kirim.
+                </p>
+                <a href="{% url 'student_access_requests' %}" class="btn btn-outline-primary w-100">
+                    Lihat Permintaan Saya
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Permintaan Akses Saya | VAMS{% endblock %}
+
+{% block page_title %}Permintaan Akses Saya{% endblock %}
+
+{% block page_subtitle %}
+Pantau status permintaan akses kunjungan Anda ke Menara Batavia.
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                    <div>
+                        <h2 class="h5 fw-bold mb-1">Riwayat Permintaan</h2>
+                        <p class="text-secondary small mb-0">
+                            Berikut daftar permintaan akses yang telah Anda ajukan.
+                        </p>
+                    </div>
+
+                    <a href="{% url 'create_access_request' %}"
+                       class="btn btn-primary px-4 py-2 fw-semibold">
+                        + Buat Permintaan Baru
+                    </a>
+                </div>
+
+                {% if requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="py-3">Tanggal Kunjungan</th>
+                                    <th class="py-3">Tujuan</th>
+                                    <th class="py-3">Status</th>
+                                    <th class="py-3">Tanggal Pengajuan</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for item in requests %}
+                                    <tr>
+                                        <td class="py-3">
+                                            <span class="fw-semibold">
+                                                {{ item.visit_date|date:"d M Y" }}
+                                            </span>
+                                        </td>
+
+                                        <td class="py-3">
+                                            {{ item.purpose }}
+                                        </td>
+
+                                        <td class="py-3">
+                                            {% if item.status == "APPROVED" %}
+                                                <span class="badge rounded-pill text-bg-success">
+                                                    {{ item.get_status_display }}
+                                                </span>
+                                            {% elif item.status == "REJECTED" %}
+                                                <span class="badge rounded-pill text-bg-danger">
+                                                    {{ item.get_status_display }}
+                                                </span>
+                                            {% elif item.status == "PENDING" %}
+                                                <span class="badge rounded-pill text-bg-warning">
+                                                    {{ item.get_status_display }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge rounded-pill text-bg-secondary">
+                                                    {{ item.get_status_display }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="py-3 text-secondary small">
+                                            {{ item.created_at|date:"d M Y, H:i" }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="card-icon mx-auto mb-3">▤</div>
+                        <h3 class="h5 fw-bold">Belum Ada Permintaan</h3>
+                        <p class="text-secondary mb-4">
+                            Kamu belum memiliki permintaan akses. Buat permintaan
+                            baru untuk memulai proses kunjungan.
+                        </p>
+                        <a href="{% url 'create_access_request' %}"
+                           class="btn btn-primary px-4">
+                            Buat Permintaan Sekarang
+                        </a>
+                    </div>
+                {% endif %}
+
+                <div class="border-top mt-4 pt-3">
+                    <a href="{% url 'dashboard' %}"
+                       class="btn btn-light border">
+                        ← Kembali ke Dashboard
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
